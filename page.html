@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Transaction History</title>
+<style>
+  :root{
+    --bg:#f6f7f9;
+    --card:#ffffff;
+    --border:#e7e9ec;
+    --ink:#161a23;
+    --muted:#6b7280;
+    --accent:#2f6fed;
+    --green-bg:#e6f6ec;
+    --green-fg:#1f8a4c;
+    --amber-bg:#fdf1e1;
+    --amber-fg:#b5750f;
+    --red-bg:#fdecec;
+    --red-fg:#cf3030;
+    --blue-bg:#e8f0fe;
+    --blue-fg:#2f6fed;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:40px 5vw 60px;
+  }
+  h1{
+    font-size:34px;
+    font-weight:800;
+    letter-spacing:-0.5px;
+    margin:0 0 22px;
+  }
+
+  .tabs{
+    display:flex;
+    gap:6px;
+    margin-bottom:18px;
+    background:#eceef1;
+    padding:5px;
+    border-radius:12px;
+    width:fit-content;
+  }
+  .tab{
+    appearance:none;
+    border:none;
+    background:transparent;
+    font-size:14px;
+    font-weight:600;
+    color:var(--muted);
+    padding:9px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .tab:hover{color:var(--ink);}
+  .tab.active{
+    background:var(--card);
+    color:var(--ink);
+    box-shadow:0 1px 3px rgba(16,24,40,.12);
+  }
+  .tab .count{
+    font-weight:600;
+    color:var(--muted);
+    margin-left:6px;
+  }
+  .tab.active .count{color:var(--accent);}
+
+  .search-wrap{margin-bottom:0;}
+  #searchBox{
+    width:320px;
+    padding:11px 16px;
+    font-size:14px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--card);
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  #searchBox:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(47,111,237,.12);
+  }
+  #searchBox::placeholder{color:#9aa1ab;}
+
+  .toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:14px;
+  }
+
+  .filter-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .indicator{
+    padding:9px 14px;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:9px;
+    outline:none;
+    cursor:pointer;
+  }
+  .indicator:focus{border-color:var(--accent);}
+
+  .pagination{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:18px;
+  }
+  .page-size{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13.5px;
+    color:var(--muted);
+  }
+  .page-size select{
+    padding:7px 10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--card);
+    font-size:13.5px;
+    color:var(--ink);
+    outline:none;
+  }
+  .page-nav{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .page-btn{
+    min-width:34px;
+    padding:7px 10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--card);
+    color:var(--ink);
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    text-align:center;
+  }
+  .page-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .page-btn.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .page-btn:disabled{opacity:.4; cursor:not-allowed;}
+
+  .summary{
+    display:flex;
+    gap:14px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .pill-stat{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 18px;
+    min-width:140px;
+  }
+  .pill-stat .l{font-size:12px; color:var(--muted); margin-bottom:4px;}
+  .pill-stat .v{font-size:19px; font-weight:700;}
+  .pill-stat .v.green{color:var(--green-fg);}
+  .pill-stat .v.red{color:var(--red-fg);}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  thead th{
+    text-align:left;
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    padding:18px 28px;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:18px 28px;
+    font-size:15px;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:#fafbfc;}
+  tbody tr:hover{background:#f2f5fb;}
+
+  .ref{color:var(--muted); font-size:14px;}
+  .donor{font-weight:600;}
+  .campaign{color:#384152;}
+  .amount{font-weight:700;}
+  .amount.out{color:var(--red-fg);}
+  .amount.in{color:var(--ink);}
+  .method{color:#384152;}
+  .date{color:var(--muted); font-size:14px;}
+  .mono{font-family:'SF Mono','Courier New',monospace; font-size:13px; color:#384152;}
+
+  .badge{
+    display:inline-block;
+    font-size:12.5px;
+    font-weight:600;
+    padding:5px 12px;
+    border-radius:20px;
+  }
+  .badge.successful, .badge.completed{background:var(--green-bg); color:var(--green-fg);}
+  .badge.processing, .badge.pending{background:var(--amber-bg); color:var(--amber-fg);}
+  .badge.failed{background:var(--red-bg); color:var(--red-fg);}
+
+  .type-tag{
+    display:inline-block;
+    font-size:12px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:6px;
+  }
+  .type-tag.donation{background:var(--blue-bg); color:var(--blue-fg);}
+  .type-tag.withdrawal{background:#f3ecfb; color:#7a3fd1;}
+
+  .cat-tag{
+    display:inline-block;
+    font-size:12px;
+    font-weight:600;
+    font-style:italic;
+    color:#384152;
+  }
+
+  .empty{
+    padding:60px 0;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+</style>
+</head>
+<body>
+
+  <h1>Transaction History</h1>
+
+  <div class="toolbar">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="all">All Transactions <span class="count" id="count-all"></span></button>
+      <button class="tab" data-tab="donation">Donated Income <span class="count" id="count-donation"></span></button>
+      <button class="tab" data-tab="withdrawal">Withdrawals <span class="count" id="count-withdrawal"></span></button>
+    </div>
+
+    <div class="search-wrap">
+      <input type="text" id="searchBox" placeholder="Search ref, donor, campaign, phone, account…">
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <select id="filterType" class="indicator">
+      <option value="">All Types</option>
+      <option value="donation">Donation</option>
+      <option value="withdrawal">Withdrawal</option>
+    </select>
+    <select id="filterStatus" class="indicator">
+      <option value="">All Status</option>
+      <option value="Successful">Successful</option>
+      <option value="Completed">Completed</option>
+      <option value="Pending">Pending</option>
+      <option value="Failed">Failed</option>
+    </select>
+    <select id="filterMethod" class="indicator">
+      <option value="">All Methods</option>
+      <option value="Mobile Money">Mobile Money</option>
+      <option value="Credit Card">Credit Card</option>
+      <option value="Card">Card</option>
+      <option value="Bank Transfer">Bank Transfer</option>
+    </select>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="card">
+    <table id="ledger">
+      <thead>
+        <tr id="theadRow"></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">No transactions in this category.</div>
+  </div>
+
+  <div class="pagination">
+    <div class="page-size">
+      <label for="pageSize">Rows per page</label>
+      <select id="pageSize">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4" selected>4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+    </div>
+    <div class="page-nav" id="pageNav"></div>
+  </div>
+
+<script>
+const data = [
+  {ref:"TXN-001", type:"donation", camp:"Halima",  campaign:"Health support", category:"Nutrition", location:"Ohio",   duration:"70 days",  created:"01/01/26", mobile:"+2526", target:5000,   donorCount:1, donor:"Hussein", phone:"+252 61 234 5601", account:"AC-100231", amount:58,   method:"Mobile Money", status:"Successful", date:"20/06/2026"},
+  {ref:"TXN-002", type:"donation", camp:"Farhiya", campaign:"DRR",            category:"Drought",   location:"Somali", duration:"180 days", created:"01/02/26", mobile:"+2526", target:100000, donorCount:1, donor:"Farah",   phone:"+252 61 234 5602", account:"AC-100232", amount:1000, method:"Card",          status:"Successful", date:"20/06/2026"},
+  {ref:"TXN-003", type:"donation", camp:"Liban",   campaign:"Health support", category:"Nutrition", location:"Ohio",   duration:"70 days",  created:"01/01/26", mobile:"+2526", target:5000,   donorCount:2, donor:"Hussein", phone:"+252 61 234 5601", account:"AC-100231", amount:35,   method:"Credit Card",   status:"Successful", date:"21/06/2026"},
+  {ref:"TXN-004", type:"donation", camp:"Abdi",    campaign:"Health support", category:"Nutrition", location:"Ohio",   duration:"70 days",  created:"01/01/26", mobile:"+2526", target:5000,   donorCount:1, donor:"Ysuuf",   phone:"+252 61 234 5604", account:"AC-100234", amount:100,  method:"Credit Card",   status:"Failed",     date:"21/06/2026"},
+  {ref:"WTH-001", type:"withdrawal", camp:"Halima",  campaign:"Health support", donor:"Halima (Creator Camp)", phone:"+252 61 555 0101", account:"AC-200101", amount:50,  method:"Mobile Money",  status:"Completed", date:"22/06/2026"},
+  {ref:"WTH-002", type:"withdrawal", camp:"Farhiya", campaign:"DRR",            donor:"Farhiya (Creator Camp)", phone:"+252 61 555 0102", account:"AC-200102", amount:900, method:"Bank Transfer", status:"Completed", date:"22/06/2026"},
+  {ref:"WTH-003", type:"withdrawal", camp:"Liban",   campaign:"Health support", donor:"Liban (Creator Camp)",  phone:"+252 61 555 0103", account:"AC-200103", amount:30,  method:"Mobile Money",  status:"Pending",   date:"23/06/2026"},
+];
+
+const fmt = n => "$" + n.toLocaleString();
+
+const columns = {
+  all:        ["Ref","Type","Creator Camp","Campaign","Category","Location","Donor","Phone","Account No.","Amount","Method","Status","Date"],
+  donation:   ["Ref","Creator Camp","Campaign","Category","Location","Duration","Target","Donors","Donor","Phone","Account No.","Amount","Method","Status","Date"],
+  withdrawal: ["Ref","Recipient","Campaign","Phone","Account No.","Amount","Method","Status","Date"]
+};
+
+let currentTab = "all";
+let searchTerm = "";
+let filters = { type:"", status:"", method:"" };
+let currentPage = 1;
+let pageSize = 4;
+
+function getCampaignKey(r){ return r.camp + "::" + r.campaign; }
+
+function matchesSearch(r, term){
+  if(!term) return true;
+  const haystack = [
+    r.ref, r.camp, r.campaign, r.category, r.location, r.donor,
+    r.phone, r.account, r.method, r.status, r.date, String(r.amount)
+  ].filter(Boolean).join(" ").toLowerCase();
+  return term.toLowerCase().split(/\s+/).every(part => haystack.includes(part));
+}
+
+function matchesFilters(r){
+  if(filters.type && r.type !== filters.type) return false;
+  if(filters.status && r.status !== filters.status) return false;
+  if(filters.method && r.method !== filters.method) return false;
+  return true;
+}
+
+function getFilteredRows(tab, term){
+  let rows = tab === "all" ? data : data.filter(r=>r.type===tab);
+  rows = rows.filter(r => matchesSearch(r, term) && matchesFilters(r));
+  return rows;
+}
+
+function render(tab, term){
+  const allRows = getFilteredRows(tab, term);
+  const totalPages = Math.max(1, Math.ceil(allRows.length / pageSize));
+  if(currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * pageSize;
+  const rows = allRows.slice(start, start + pageSize);
+
+  const thead = document.getElementById("theadRow");
+  const tbody = document.getElementById("tbody");
+  const emptyState = document.getElementById("emptyState");
+  thead.innerHTML = columns[tab].map(c=>`<th>${c}</th>`).join("");
+  tbody.innerHTML = "";
+
+  if(rows.length === 0){
+    document.getElementById("ledger").style.display = "none";
+    emptyState.style.display = "block";
+    renderPagination(0);
+    return;
+  }
+  document.getElementById("ledger").style.display = "table";
+  emptyState.style.display = "none";
+
+  rows.forEach(r=>{
+    const tr = document.createElement("tr");
+    const amountClass = r.type === "withdrawal" ? "out" : "in";
+    const amountSign = r.type === "withdrawal" ? "-" : "";
+    let cells = `<td class="ref">${r.ref}</td>`;
+
+    if(tab === "all"){
+      cells += `
+        <td><span class="type-tag ${r.type}">${r.type === "donation" ? "Donation" : "Withdrawal"}</span></td>
+        <td class="donor">${r.camp}</td>
+        <td class="campaign">${r.campaign}</td>
+        <td><span class="cat-tag">${r.category||""}</span></td>
+        <td>${r.location||""}</td>
+        <td class="donor">${r.donor}</td>
+        <td class="mono">${r.phone||""}</td>
+        <td class="mono">${r.account||""}</td>
+        <td class="amount ${amountClass}">${amountSign}${fmt(r.amount)}</td>
+        <td class="method">${r.method}</td>
+        <td><span class="badge ${r.status.toLowerCase()}">${r.status}</span></td>
+        <td class="date">${r.date}</td>
+      `;
+    } else if(tab === "donation"){
+      cells += `
+        <td class="donor">${r.camp}</td>
+        <td class="campaign">${r.campaign}</td>
+        <td><span class="cat-tag">${r.category}</span></td>
+        <td>${r.location}</td>
+        <td>${r.duration}</td>
+        <td class="amount">${fmt(r.target)}</td>
+        <td>${r.donorCount}</td>
+        <td class="donor">${r.donor}</td>
+        <td class="mono">${r.phone||""}</td>
+        <td class="mono">${r.account||""}</td>
+        <td class="amount ${amountClass}">${fmt(r.amount)}</td>
+        <td class="method">${r.method}</td>
+        <td><span class="badge ${r.status.toLowerCase()}">${r.status}</span></td>
+        <td class="date">${r.date}</td>
+      `;
+    } else {
+      cells += `
+        <td class="donor">${r.donor}</td>
+        <td class="campaign">${r.campaign}</td>
+        <td class="mono">${r.phone||""}</td>
+        <td class="mono">${r.account||""}</td>
+        <td class="amount ${amountClass}">${amountSign}${fmt(r.amount)}</td>
+        <td class="method">${r.method}</td>
+        <td><span class="badge ${r.status.toLowerCase()}">${r.status}</span></td>
+        <td class="date">${r.date}</td>
+      `;
+    }
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages){
+  const nav = document.getElementById("pageNav");
+  if(totalPages <= 1){ nav.innerHTML = ""; return; }
+
+  let html = `<button class="page-btn" id="prevPage" ${currentPage===1?"disabled":""}>‹</button>`;
+  for(let p=1; p<=totalPages; p++){
+    html += `<button class="page-btn ${p===currentPage?"active":""}" data-page="${p}">${p}</button>`;
+  }
+  html += `<button class="page-btn" id="nextPage" ${currentPage===totalPages?"disabled":""}>›</button>`;
+  nav.innerHTML = html;
+
+  nav.querySelectorAll(".page-btn[data-page]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      currentPage = parseInt(btn.dataset.page, 10);
+      render(currentTab, searchTerm);
+    });
+  });
+  const prevBtn = document.getElementById("prevPage");
+  const nextBtn = document.getElementById("nextPage");
+  if(prevBtn) prevBtn.addEventListener("click", ()=>{ if(currentPage>1){ currentPage--; render(currentTab, searchTerm); } });
+  if(nextBtn) nextBtn.addEventListener("click", ()=>{ if(currentPage<totalPages){ currentPage++; render(currentTab, searchTerm); } });
+}
+
+function renderSummary(tab, term){
+  const rows = getFilteredRows(tab, term);
+  const summary = document.getElementById("summary");
+
+  const distinctCampaigns = new Set(rows.map(getCampaignKey)).size;
+  const totalCount = rows.length;
+  const failedCount = rows.filter(r=>r.status==="Failed").length;
+
+  if(tab === "all"){
+    const donationRows = rows.filter(r=>r.type==="donation" && r.status==="Successful");
+    const withdrawalRows = rows.filter(r=>r.type==="withdrawal" && r.status!=="Failed");
+    const totalAmount = donationRows.reduce((s,r)=>s+r.amount,0);
+    const withdrawalAmount = withdrawalRows.reduce((s,r)=>s+r.amount,0);
+    const balance = totalAmount - withdrawalAmount;
+
+    summary.innerHTML = `
+      <div class="pill-stat"><div class="l">Total Transactions</div><div class="v">${totalCount}</div></div>
+      <div class="pill-stat"><div class="l">Total Campaigns</div><div class="v">${distinctCampaigns}</div></div>
+      <div class="pill-stat"><div class="l">Total Amount (Donated)</div><div class="v green">${fmt(totalAmount)}</div></div>
+      <div class="pill-stat"><div class="l">Withdrawal Amount</div><div class="v red">${fmt(withdrawalAmount)}</div></div>
+      <div class="pill-stat"><div class="l">Balance</div><div class="v">${fmt(balance)}</div></div>
+      <div class="pill-stat"><div class="l">Failed</div><div class="v ${failedCount? 'red':''}">${failedCount}</div></div>
+    `;
+  } else if(tab === "donation"){
+    const successCount = rows.filter(r=>r.status==="Successful").length;
+    const totalRaised = rows.filter(r=>r.status==="Successful").reduce((s,r)=>s+r.amount,0);
+    const totalTarget = [...new Set(rows.map(getCampaignKey))]
+      .map(key => rows.find(r=>getCampaignKey(r)===key).target)
+      .reduce((s,t)=>s+t,0);
+
+    summary.innerHTML = `
+      <div class="pill-stat"><div class="l">Total Donations</div><div class="v">${totalCount}</div></div>
+      <div class="pill-stat"><div class="l">Total Campaigns</div><div class="v">${distinctCampaigns}</div></div>
+      <div class="pill-stat"><div class="l">Total Amount Donated</div><div class="v green">${fmt(totalRaised)}</div></div>
+      <div class="pill-stat"><div class="l">Combined Target</div><div class="v">${fmt(totalTarget)}</div></div>
+      <div class="pill-stat"><div class="l">Successful</div><div class="v green">${successCount}</div></div>
+      <div class="pill-stat"><div class="l">Failed</div><div class="v ${failedCount? 'red':''}">${failedCount}</div></div>
+    `;
+  } else {
+    const completedCount = rows.filter(r=>r.status==="Completed").length;
+    const pendingCount = rows.filter(r=>r.status==="Pending").length;
+    const withdrawalAmount = rows.filter(r=>r.status!=="Failed").reduce((s,r)=>s+r.amount,0);
+
+    summary.innerHTML = `
+      <div class="pill-stat"><div class="l">Total Withdrawals</div><div class="v">${totalCount}</div></div>
+      <div class="pill-stat"><div class="l">Total Campaigns</div><div class="v">${distinctCampaigns}</div></div>
+      <div class="pill-stat"><div class="l">Withdrawal Amount</div><div class="v red">${fmt(withdrawalAmount)}</div></div>
+      <div class="pill-stat"><div class="l">Completed</div><div class="v green">${completedCount}</div></div>
+      <div class="pill-stat"><div class="l">Pending</div><div class="v">${pendingCount}</div></div>
+    `;
+  }
+}
+
+function setCounts(){
+  document.getElementById("count-all").textContent = data.length;
+  document.getElementById("count-donation").textContent = data.filter(r=>r.type==="donation").length;
+  document.getElementById("count-withdrawal").textContent = data.filter(r=>r.type==="withdrawal").length;
+}
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    currentTab = btn.dataset.tab;
+    currentPage = 1;
+    render(currentTab, searchTerm);
+    renderSummary(currentTab, searchTerm);
+  });
+});
+
+document.getElementById("searchBox").addEventListener("input", (e)=>{
+  searchTerm = e.target.value.trim();
+  currentPage = 1;
+  render(currentTab, searchTerm);
+  renderSummary(currentTab, searchTerm);
+});
+
+["filterType","filterStatus","filterMethod"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", (e)=>{
+    const key = id.replace("filter","").toLowerCase();
+    filters[key] = e.target.value;
+    currentPage = 1;
+    render(currentTab, searchTerm);
+    renderSummary(currentTab, searchTerm);
+  });
+});
+
+document.getElementById("pageSize").addEventListener("change", (e)=>{
+  pageSize = parseInt(e.target.value, 10);
+  currentPage = 1;
+  render(currentTab, searchTerm);
+});
+
+setCounts();
+render(currentTab, searchTerm);
+renderSummary(currentTab, searchTerm);
+</script>
+
+</body>
+</html>
